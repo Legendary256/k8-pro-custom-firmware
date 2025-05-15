@@ -1,10 +1,10 @@
-# 2IC80 - Lab on Offensive Security
-## Group 14
-### Eindhoven University of Technology
+# 💻 2IC80 – Offensive Security Lab  
+**Group 14**  
+_Eindhoven University of Technology_
 
 ### Visualization
 
-Underneath you can see a visualization of the attack. On the right side you can see all connected devices to the victim's machine and just after the keyboard is getting connected, the terminal is being opened and a command will be executed.
+Below is a visualization of the attack. On the right side, you can see all devices connected to the victim’s machine. As soon as the keyboard is connected, the terminal opens automatically and a command is executed.
 
 ![Lab on Offensive Security](./gif/readme.gif)
 
