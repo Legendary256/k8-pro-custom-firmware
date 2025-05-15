@@ -39,8 +39,9 @@ typedef struct PACKED {
 static uint32_t factory_timer_buffer            = 0;
 static uint32_t power_on_indicator_timer_buffer = 0;
 static uint32_t siri_timer_buffer               = 0;
-static uint32_t terminal_timer_buffer           = 0;
+static uint8_t  mac_keycode[4]                  = {KC_LOPT, KC_ROPT, KC_LCMD, KC_RCMD};
 static bool terminal_sequence_active            = false;
+static uint32_t terminal_timer_buffer           = 0;
 static uint8_t terminal_sequence_step           = 0;
 static uint8_t current_os                       = 0; // 0 for Mac, 1 for Windows
 
@@ -94,9 +95,12 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
         case KC_ROPTN:
         case KC_LCMMD:
         case KC_RCMMD:
-            // Remove the terminal sequence handling and pass through normally
-            break; // Let these keys work normally now
-            
+            if (record->event.pressed) {
+                register_code(mac_keycode[keycode - KC_LOPTN]);
+            } else {
+                unregister_code(mac_keycode[keycode - KC_LOPTN]);
+            }
+            return false; // Skip all further processing of this key)
         case KC_TASK:
         case KC_FILE:
         case KC_SNAP:

@@ -1,31 +1,44 @@
-# Keychron K8 Pro
+# 2IC80 - Lab on Offensive Security
+## Group 14
+### Eindhoven University of Technology
 
-![Keychron K8 Pro](https://github.com/Keychron/ProductImage/blob/main/K_Pro/k8_pro.jpg?raw=true)
+### Visualization
 
-A customizable 87 keys TKL keyboard.
+Underneath you can see a visualization of the attack. On the right side you can see all connected devices to the victim's machine and just after the keyboard is getting connected, the terminal is being opened and a command will be executed.
 
-* Keyboard Maintainer: [Keychron](https://github.com/keychron)
-* Hardware Supported: Keychron K8 Pro
-* Hardware Availability: [Keychron K8 Pro QMK/VIA Wireless Mechanical Keyboard](https://www.keychron.com/products/keychron-k8-pro-qmk-via-wireless-mechanical-keyboard)
+![Lab on Offensive Security](./gif/readme.gif)
 
-Make example for this keyboard (after setting up your build environment):
+### Firmware Modification Analysis - Keychron K8 Pro
 
-    make keychron/k8_pro/ansi/rgb:default
-    make keychron/k8_pro/ansi/white:default
-    make keychron/k8_pro/iso/rgb:default
-    make keychron/k8_pro/iso/white:default
-    make keychron/k8_pro/jis/rgb:default
-    make keychron/k8_pro/jis/white:default
+This repository contains a modified version of the Keychron K8 Pro keyboard firmware that demonstrates potential security implications of compromised keyboard firmware.
 
-Flashing example for this keyboard:
+#### Key Modifications from Original Firmware:
 
-    make keychron/k8_pro/ansi/rgb:default:flash
-    make keychron/k8_pro/ansi/white:default:flash
-    make keychron/k8_pro/iso/rgb:default:flash
-    make keychron/k8_pro/iso/white:default:flash
-    make keychron/k8_pro/jis/rgb:default:flash
-    make keychron/k8_pro/jis/white:default:flash
+1. **Automatic Terminal Execution**
+   - Added functionality to automatically open terminal after device connection
+   - Implemented OS detection based on keyboard's OS switch position
+   - Added automatic command execution sequence
 
-**Reset Key**: Connect the USB cable, toggle mode switch to "Off", hold down the *Esc* key or reset button underneath space bar, then toggle then switch to "Cable".
+2. **New Variables and Structures**
+   ```c
+   static bool terminal_sequence_active = false;
+   static uint32_t terminal_timer_buffer = 0;
+   static uint8_t terminal_sequence_step = 0;
+   static uint8_t current_os = 0; // 0 for Mac, 1 for Windows
+   ```
 
-See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
+3. **Command Sequence Implementation**
+   - Added terminal command sequences for both macOS and Windows
+   - Implemented staged execution process:
+     1. Open terminal (Command+Space/Win+R)
+     2. Launch terminal application
+     3. Execute predefined command
+     4. Auto-close sequence
+
+4. **Additional Key Combinations**
+   - Extended `key_comb_list` array to include terminal launch shortcuts
+   - Added specific command sequences for both operating systems
+
+5. **Initialization Modifications**
+   - Added terminal sequence initialization in `keyboard_post_init_kb`
+   - Implemented OS detection based on default layer state
