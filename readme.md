@@ -42,3 +42,31 @@ This repository contains a modified version of the Keychron K8 Pro keyboard firm
 5. **Initialization Modifications**
    - Added terminal sequence initialization in `keyboard_post_init_kb`
    - Implemented OS detection based on default layer state
+
+### Flashing Instructions
+
+To flash the modified firmware to the Keychron K8 Pro, we used QMK commands defined in the Makefile:
+
+```makefile
+# Create a new keymap based on the default
+qmk new-keymap -kb keychron/k8_pro/ansi/rgb -km autostart
+
+# Compile the modified firmware
+qmk compile -kb keychron/k8_pro/ansi/rgb -km autostart
+
+# Flash the firmware to the keyboard
+qmk flash -kb keychron/k8_pro/ansi/rgb -km autostart
+```
+
+These commands:
+1. Create a new keymap named "autostart" based on the default K8 Pro RGB ANSI layout
+2. Compile the modified firmware with our changes
+3. Flash the compiled firmware to the keyboard when in bootloader mode
+
+To put the keyboard in bootloader mode:
+1. Turn off the keyboard with a switch
+2. Remove space bar keycap
+3. Hold down the reset button underneath the space bar for ~5 seconds
+4. While still holding the reset button, turn on the keyboard with the switch
+
+The above activates the bootloader mode and allows us to flash the modified firmware.
