@@ -1,0 +1,22 @@
+# Git files
+.git
+.gitignore
+
+# Documentation
+readme.md
+DEPLOYMENT.md
+
+# Development scripts (we need clone-site.sh and run-site.sh for the host)
+run-site.sh
+
+# Node modules and build artifacts
+node_modules
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp 

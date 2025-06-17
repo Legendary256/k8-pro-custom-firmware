@@ -1,0 +1,72 @@
+{
+    auto_https off
+}
+
+:80 {
+    # Serve the main website
+    root * /usr/share/caddy
+    
+    # Enable file browsing for firmware and via_json directories
+    route /firmware/* {
+        file_server browse
+        header Content-Type "application/octet-stream"
+        header Content-Disposition "attachment"
+    }
+    
+    route /via_json/* {
+        file_server browse
+        header Content-Type "application/json"
+    }
+    
+    # Serve static files with proper MIME types
+    @js path *.js
+    header @js Content-Type "application/javascript"
+    
+    @css path *.css
+    header @css Content-Type "text/css"
+    
+    @json path *.json
+    header @json Content-Type "application/json"
+    
+    @svg path *.svg
+    header @svg Content-Type "image/svg+xml"
+    
+    @png path *.png
+    header @png Content-Type "image/png"
+    
+    @mp3 path *.mp3
+    header @mp3 Content-Type "audio/mpeg"
+    
+    # Serve all files
+    file_server
+    
+    # Fallback to index.html for SPA routing
+    try_files {path} /index.html
+    
+    # Enable compression
+    encode gzip zstd
+    
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+    
+    # CORS headers for API requests
+    @cors_preflight method OPTIONS
+    header @cors_preflight {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+        Access-Control-Max-Age "86400"
+    }
+    respond @cors_preflight 200
+    
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+} 
