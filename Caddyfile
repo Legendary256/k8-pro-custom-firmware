@@ -1,4 +1,4 @@
-tryaiadam.com {
+launcher.keychron.tryaiadam.com {
     # Caddy will automatically get Let's Encrypt certificate
     # Serve the main website
     root * /usr/share/caddy
