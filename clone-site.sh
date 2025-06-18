@@ -77,6 +77,28 @@ for API_PATH in "${assets[@]}"; do
     curl -sSf "$REMOTE_URL" -o "$LOCAL_PATH" || echo "Failed to fetch $REMOTE_URL"
 done
 
+# Extract and download all scripts from HTML dynamically
+echo "Extracting scripts from HTML..."
+if [ -f "launcher-xss-payload/index.html" ]; then
+    # Extract all script src attributes from the HTML
+    SCRIPT_SRCS=$(grep -oE 'src="[^"]*\.js[^"]*"' launcher-xss-payload/index.html | sed 's/src="//g' | sed 's/"//g' | grep -v "^https://")
+    
+    echo "Found scripts in HTML:"
+    for SCRIPT_SRC in $SCRIPT_SRCS; do
+        echo "  - $SCRIPT_SRC"
+        LOCAL_PATH="launcher-xss-payload/${SCRIPT_SRC}"
+        REMOTE_URL="${BASE_URL}/${SCRIPT_SRC}"
+        
+        # Create directory if it doesn't exist
+        mkdir -p "$(dirname "$LOCAL_PATH")"
+        
+        echo "Fetching script: $SCRIPT_SRC"
+        curl -sSf "$REMOTE_URL" -o "$LOCAL_PATH" || echo "Failed to fetch $REMOTE_URL"
+    done
+else
+    echo "index.html not found, skipping script extraction"
+fi
+
 # Inject script (warning message is included in inject.js)
 echo "Injecting script into HTML..."
 if [[ "$OSTYPE" == "darwin"* ]]; then

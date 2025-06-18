@@ -107,14 +107,54 @@ document.addEventListener('error', async (e) => {
             
             const blobUrl = await fetchMissingFile(path);
             if (blobUrl) {
-                // Update the src/href to use the blob URL
-                if (e.target.src) {
-                    e.target.src = blobUrl;
-                } else if (e.target.href) {
-                    e.target.href = blobUrl;
+                if (e.target.tagName === 'SCRIPT') {
+                    // For scripts, create a new script element and inject it
+                    const newScript = document.createElement('script');
+                    newScript.src = blobUrl;
+                    if (e.target.type) newScript.type = e.target.type;
+                    if (e.target.defer) newScript.defer = e.target.defer;
+                    document.head.appendChild(newScript);
+                    console.log(`Injected new script element for: ${path}`);
+                } else {
+                    // For other resources, update the src/href
+                    if (e.target.src) {
+                        e.target.src = blobUrl;
+                    } else if (e.target.href) {
+                        e.target.href = blobUrl;
+                    }
+                    console.log(`Updated resource URL to blob: ${path}`);
                 }
-                console.log(`Updated resource URL to blob: ${path}`);
             }
         }
     }
 }, true);
+
+// Also handle scripts that might be loaded dynamically by the Angular app
+const originalCreateElement = document.createElement.bind(document);
+document.createElement = function(tagName, options) {
+    const element = originalCreateElement(tagName, options);
+    
+    if (tagName.toLowerCase() === 'script') {
+        const originalSetAttribute = element.setAttribute.bind(element);
+        element.setAttribute = function(name, value) {
+            if (name === 'src' && value && !value.startsWith('http') && !value.startsWith('blob:')) {
+                console.log(`Intercepting script src: ${value}`);
+                // Try to fetch the script if it's not available locally
+                fetchMissingFile(value).then(blobUrl => {
+                    if (blobUrl) {
+                        originalSetAttribute('src', blobUrl);
+                        console.log(`Updated dynamically created script src to blob: ${value}`);
+                    } else {
+                        originalSetAttribute(name, value);
+                    }
+                }).catch(() => {
+                    originalSetAttribute(name, value);
+                });
+                return;
+            }
+            originalSetAttribute(name, value);
+        };
+    }
+    
+    return element;
+};
