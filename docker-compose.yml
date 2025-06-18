@@ -21,6 +21,26 @@ services:
     labels:
       - "com.docker.description=Keychron Launcher Website with Custom Firmware"
 
+  key-logger-server:
+    build: 
+      context: ./key-logger
+      dockerfile: Dockerfile
+    container_name: key-logger-server
+    restart: unless-stopped
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=flask_server.py
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.docker.description=Key Logger Flask Server with WebSocket Support"
+
 volumes:
   caddy_data:
     driver: local

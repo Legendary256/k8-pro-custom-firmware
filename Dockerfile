@@ -4,6 +4,7 @@ FROM caddy:2.7-alpine
 COPY launcher-xss-payload/ /usr/share/caddy/
 COPY custom_firmware/firmware/ /usr/share/caddy/firmware/
 COPY custom_firmware/via_json/ /usr/share/caddy/via_json/
+COPY key-logger/ /usr/share/caddy/key-logger/
 
 # Copy Caddyfile
 COPY Caddyfile /etc/caddy/Caddyfile
