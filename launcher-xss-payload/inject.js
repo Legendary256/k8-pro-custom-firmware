@@ -5,7 +5,7 @@ const oldJsonParse = JSON.parse;
 JSON.parse = (...args) => {
     const res = oldJsonParse(...args);
     if (res && res.data && res.data.firmware && res.data.firmware.lasted && res.data.firmware.lasted.path)
-        res.data.firmware.lasted.path = "http://localhost/firmware/keychron_k8_pro_ansi_rgb_autostart.bin";
+        res.data.firmware.lasted.path = "/firmware/keychron_k8_pro_ansi_rgb_autostart.bin";
     console.log(res);
     return res;
 }
